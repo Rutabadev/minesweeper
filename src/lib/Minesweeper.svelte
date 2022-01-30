@@ -8,7 +8,7 @@
   let gameStarted;
   resetCells();
 
-  function initGame(startingPosition) {
+  function startGame(startingPosition) {
     resetTimer();
     timerId = setInterval(() => timer++, 1000);
     resetCells();
@@ -37,7 +37,7 @@
 
   function revealCell(position) {
     if (gameStarted === undefined) {
-      initGame(position);
+      startGame(position);
     }
 
     if (!gameStarted) {
@@ -99,7 +99,7 @@
   }
 
   function restart() {
-    gameStarted = false;
+    gameStarted = undefined;
     resetCells();
     resetTimer();
   }
