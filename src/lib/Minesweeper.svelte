@@ -35,6 +35,14 @@
     }
   }
 
+  function keyToCoords(key) {
+    return key.split("-").map(Number);
+  }
+
+  function coordsToKey(x, y) {
+    return `${x}-${y}`;
+  }
+
   function revealCell(position) {
     if (gameStarted === undefined) {
       startGame(position);
@@ -44,11 +52,13 @@
       return;
     }
 
-    if (cells.get(position).flagged) {
+    if (cells.get(position)?.flagged) {
       return;
     }
 
     updateCell(position, { revealed: true, clicked: true });
+
+    cells.get(position)?.value === 0 && revealNeighbours(position);
 
     updateUI();
 
@@ -57,10 +67,40 @@
     }
   }
 
+  function getNeighbours(position) {
+    const [x, y] = keyToCoords(position);
+    return [
+      [x + 1, y],
+      [x - 1, y],
+      [x, y + 1],
+      [x, y - 1],
+      [x - 1, y - 1],
+      [x + 1, y - 1],
+      [x - 1, y + 1],
+      [x + 1, y + 1],
+    ]
+      .filter(isInBounds)
+      .map(([x, y]) => coordsToKey(x, y));
+
+    function isInBounds([x, y]) {
+      return 0 <= x && x < COLS && 0 <= y && y < ROWS;
+    }
+  }
+
+  function revealNeighbours(position) {
+    getNeighbours(position).forEach((neighbour) => {
+      if (cells.get(neighbour)?.revealed) {
+        return;
+      }
+
+      revealCell(neighbour);
+    });
+  }
+
   function resetCells() {
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
-        cells.set(`${x}-${y}`, {});
+        cells.set(coordsToKey(x, y), {});
       }
     }
     updateUI();
@@ -73,10 +113,10 @@
         y = Math.trunc(Math.random() * ROWS);
         x = Math.trunc(Math.random() * COLS);
       } while (
-        cells.get(`${x}-${y}`) === "💣" ||
-        `${x}-${y}` === startingPosition
+        cells.get(coordsToKey(x, y)) === "💣" ||
+        coordsToKey(x, y) === startingPosition
       );
-      updateCell(`${x}-${y}`, { value: "💣" });
+      updateCell(coordsToKey(x, y), { value: "💣" });
     }
   }
 
@@ -84,16 +124,11 @@
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
         let number = 0;
-        if (cells.get(`${x}-${y}`)?.value === "💣") continue;
-        if (cells.get(`${x + 1}-${y}`)?.value === "💣") number++;
-        if (cells.get(`${x - 1}-${y}`)?.value === "💣") number++;
-        if (cells.get(`${x}-${y + 1}`)?.value === "💣") number++;
-        if (cells.get(`${x}-${y - 1}`)?.value === "💣") number++;
-        if (cells.get(`${x - 1}-${y - 1}`)?.value === "💣") number++;
-        if (cells.get(`${x + 1}-${y - 1}`)?.value === "💣") number++;
-        if (cells.get(`${x - 1}-${y + 1}`)?.value === "💣") number++;
-        if (cells.get(`${x + 1}-${y + 1}`)?.value === "💣") number++;
-        updateCell(`${x}-${y}`, { value: number });
+        if (cells.get(coordsToKey(x, y))?.value === "💣") continue;
+        getNeighbours(coordsToKey(x, y)).forEach(
+          (neighbour) => cells.get(neighbour)?.value === "💣" && number++
+        );
+        updateCell(coordsToKey(x, y), { value: number });
       }
     }
   }
