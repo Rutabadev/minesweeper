@@ -2,12 +2,10 @@
   let COLS = 10;
   let ROWS = 5;
   let cells = new Map();
-  let revealedCells = new Map();
   let remainingDefuses = 12;
   let timer = 0;
   let timerId;
-  let gameStarted = false;
-  let buttonsGrid;
+  let gameStarted;
   resetCells();
 
   function initGame(startingPosition) {
@@ -19,36 +17,50 @@
     gameStarted = true;
   }
 
-  function looseGame() {
+  function looseGame(bombExplodedPosition) {
+    gameStarted = false;
     clearInterval(timerId);
+    cells.set(bombExplodedPosition, {
+      ...cells.get(bombExplodedPosition),
+      revealed: true,
+      exploded: true,
+    });
+    for (let [position, { value, flagged }] of cells) {
+      if (value === "💣") {
+        updateCell(position, { revealed: true });
+      }
+      if (flagged && value !== "💣") {
+        updateCell(position, { wrong: true });
+      }
+    }
   }
 
-  function revealCell(position, e) {
-    if (revealedCells.get(position) === "🚩") {
-      return;
-    }
-
-    if (!gameStarted) {
+  function revealCell(position) {
+    if (gameStarted === undefined) {
       initGame(position);
     }
 
-    e.target.disabled = true;
+    if (!gameStarted) {
+      return;
+    }
 
-    revealedCells.set(position, cells.get(position));
+    if (cells.get(position).flagged) {
+      return;
+    }
+
+    updateCell(position, { revealed: true, clicked: true });
+
     updateUI();
 
-    if (revealedCells.get(position) === "💣") {
-      looseGame();
+    if (cells.get(position)?.value === "💣") {
+      looseGame(position);
     }
   }
 
   function resetCells() {
-    buttonsGrid &&
-      [...buttonsGrid.children].forEach((child) => (child.disabled = false));
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
-        cells.set(`${x}-${y}`, null);
-        revealedCells.set(`${x}-${y}`, null);
+        cells.set(`${x}-${y}`, {});
       }
     }
     updateUI();
@@ -64,28 +76,26 @@
         cells.get(`${x}-${y}`) === "💣" ||
         `${x}-${y}` === startingPosition
       );
-      cells.set(`${x}-${y}`, "💣");
+      updateCell(`${x}-${y}`, { value: "💣" });
     }
-    updateUI();
   }
 
   function setNumbers() {
     for (let y = 0; y < ROWS; y++) {
       for (let x = 0; x < COLS; x++) {
         let number = 0;
-        if (cells.get(`${x}-${y}`) === "💣") continue;
-        if (cells.get(`${x + 1}-${y}`) === "💣") number++;
-        if (cells.get(`${x - 1}-${y}`) === "💣") number++;
-        if (cells.get(`${x}-${y + 1}`) === "💣") number++;
-        if (cells.get(`${x}-${y - 1}`) === "💣") number++;
-        if (cells.get(`${x - 1}-${y - 1}`) === "💣") number++;
-        if (cells.get(`${x + 1}-${y - 1}`) === "💣") number++;
-        if (cells.get(`${x - 1}-${y + 1}`) === "💣") number++;
-        if (cells.get(`${x + 1}-${y + 1}`) === "💣") number++;
-        cells.set(`${x}-${y}`, number);
+        if (cells.get(`${x}-${y}`)?.value === "💣") continue;
+        if (cells.get(`${x + 1}-${y}`)?.value === "💣") number++;
+        if (cells.get(`${x - 1}-${y}`)?.value === "💣") number++;
+        if (cells.get(`${x}-${y + 1}`)?.value === "💣") number++;
+        if (cells.get(`${x}-${y - 1}`)?.value === "💣") number++;
+        if (cells.get(`${x - 1}-${y - 1}`)?.value === "💣") number++;
+        if (cells.get(`${x + 1}-${y - 1}`)?.value === "💣") number++;
+        if (cells.get(`${x - 1}-${y + 1}`)?.value === "💣") number++;
+        if (cells.get(`${x + 1}-${y + 1}`)?.value === "💣") number++;
+        updateCell(`${x}-${y}`, { value: number });
       }
     }
-    updateUI();
   }
 
   function restart() {
@@ -100,55 +110,62 @@
   }
 
   function updateUI() {
-    revealedCells = revealedCells;
+    cells = cells;
   }
 
   function defuseBomb(position) {
+    if (!gameStarted) {
+      return;
+    }
+    const alreadyFlagged = cells.get(position)?.flagged;
+    alreadyFlagged ? removeFlag() : remainingDefuses && addFlag();
+    updateUI();
+
     function addFlag() {
       remainingDefuses--;
-      revealedCells.set(position, "🚩");
+      updateCell(position, { flagged: true });
     }
     function removeFlag() {
       remainingDefuses++;
-      revealedCells.set(position, null);
+      updateCell(position, { flagged: false });
     }
-    const alreadyFlagged = revealedCells.get(position) === "🚩";
-    alreadyFlagged ? removeFlag() : remainingDefuses && addFlag();
-    updateUI();
+  }
+
+  function updateCell(position, values) {
+    cells.set(position, { ...cells.get(position), ...values });
   }
 </script>
 
 <div>
   <div
-    class="flex h-20 w-full justify-between bg-gray-600 p-2 ring-2 ring-gray-800"
+    class="flex h-20 w-full justify-between border-2 border-gray-900 bg-gray-600 p-2"
   >
     <div
-      class="flex items-center font-mono text-4xl font-bold text-red-500 ring-2 ring-gray-800"
+      class="flex items-center border-2 border-gray-900 font-mono text-4xl font-bold text-red-500"
     >
       <span class="mx-1">{remainingDefuses.toString().padStart(3, "0")}</span>
     </div>
     <button
       on:click={restart}
-      class="px-4 font-mono text-2xl font-bold ring-2 ring-gray-800"
+      class="border-2 border-gray-900 px-4 font-mono text-2xl font-bold"
       >Restart</button
     >
     <div
-      class="flex items-center font-mono text-4xl font-bold text-red-500 ring-2 ring-gray-800"
+      class="flex items-center border-2 border-gray-900 font-mono text-4xl font-bold text-red-500"
     >
       <span class="mx-1">{timer.toString().padStart(3, "0")}</span>
     </div>
   </div>
   <div
-    bind:this={buttonsGrid}
-    class="mt-0.5 grid"
+    class="-mt-0.5 grid gap-0.5 border-2 border-gray-900 bg-gray-900"
     style={`
         grid-template-columns: repeat(${COLS}, 1fr);        
       `}
   >
-    {#each Array.from(revealedCells) as [position, value]}
+    {#each Array.from(cells) as [position, { value, flagged, exploded, revealed, clicked, wrong }]}
       <button
         class="
-          aspect-square w-8 cursor-default bg-gray-600 font-bold ring-2 ring-gray-800 disabled:bg-gray-700
+        stacker relative grid aspect-square w-8 cursor-default place-items-center border-2 border-t-gray-400 border-l-gray-400 border-b-gray-700 border-r-gray-700 bg-gray-600 font-bold disabled:border-none disabled:bg-gray-800
           {value === 1 && 'text-blue-600'}
           {value === 2 && 'text-green-500'}
           {value === 3 && 'text-red-500'}
@@ -157,11 +174,17 @@
           {value === 6 && 'text-sky-400'}
           {value === 7 && 'text-black'}
           {value === 8 && 'text-gray-500'}
+          {exploded && '!bg-red-500'}
         "
-        on:click={(e) => revealCell(position, e)}
+        disabled={clicked}
+        on:click={() => revealCell(position)}
         on:contextmenu|preventDefault={() => defuseBomb(position)}
       >
-        {value ? value : ""}
+        {@html (wrong
+          ? `<span class="col-start-1 row-start-1">💣</span><span class="col-start-1 row-start-1">❌</span>`
+          : flagged
+          ? "🚩"
+          : revealed && value) || ""}
       </button>
     {/each}
   </div>
