@@ -1,8 +1,9 @@
 <script>
-  let COLS = 10;
-  let ROWS = 5;
+  const COLS = 10;
+  const ROWS = 5;
+  const BOMBS = 12;
   let cells = new Map();
-  let remainingDefuses = 12;
+  let remainingDefuses = BOMBS;
   let timer = 0;
   let timerId;
   let gameStarted;
@@ -134,6 +135,7 @@
   }
 
   function restart() {
+    remainingDefuses = BOMBS;
     gameStarted = undefined;
     resetCells();
     resetTimer();
@@ -152,14 +154,15 @@
     if (!gameStarted) {
       return;
     }
-    const alreadyFlagged = cells.get(position)?.flagged;
-    alreadyFlagged ? removeFlag() : remainingDefuses && addFlag();
+
+    cells.get(position)?.flagged ? removeFlag() : remainingDefuses && addFlag();
     updateUI();
 
     function addFlag() {
       remainingDefuses--;
       updateCell(position, { flagged: true });
     }
+
     function removeFlag() {
       remainingDefuses++;
       updateCell(position, { flagged: false });
@@ -215,11 +218,11 @@
         on:click={() => revealCell(position)}
         on:contextmenu|preventDefault={() => defuseBomb(position)}
       >
-        {@html (wrong
+        {@html wrong
           ? `<span class="col-start-1 row-start-1">💣</span><span class="col-start-1 row-start-1">❌</span>`
           : flagged
           ? "🚩"
-          : revealed && value) || ""}
+          : (revealed && value) || ""}
       </button>
     {/each}
   </div>
