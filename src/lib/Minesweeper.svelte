@@ -7,6 +7,7 @@
   let timer = 0;
   let timerId;
   let gameStarted;
+  let gameWon;
   resetCells();
 
   function startGame(startingPosition) {
@@ -21,17 +22,10 @@
   function looseGame(bombExplodedPosition) {
     gameStarted = false;
     clearInterval(timerId);
-    cells.set(bombExplodedPosition, {
-      ...cells.get(bombExplodedPosition),
-      revealed: true,
-      exploded: true,
-    });
-    for (let [position, { value, flagged }] of cells) {
+    updateCell(bombExplodedPosition, { revealed: true, exploded: true });
+    for (let [position, { value }] of cells) {
       if (value === "💣") {
         updateCell(position, { revealed: true });
-      }
-      if (flagged && value !== "💣") {
-        updateCell(position, { wrong: true });
       }
     }
   }
@@ -66,6 +60,8 @@
     if (cells.get(position)?.value === "💣") {
       looseGame(position);
     }
+
+    checkGameWon();
   }
 
   function getNeighbours(position) {
@@ -80,11 +76,11 @@
       [x - 1, y + 1],
       [x + 1, y + 1],
     ]
-      .filter(isInBounds)
-      .map(([x, y]) => coordsToKey(x, y));
+      .map(([x, y]) => coordsToKey(x, y))
+      .filter(isInBounds);
 
-    function isInBounds([x, y]) {
-      return 0 <= x && x < COLS && 0 <= y && y < ROWS;
+    function isInBounds(position) {
+      return cells.has(position);
     }
   }
 
@@ -135,6 +131,7 @@
   }
 
   function restart() {
+    gameWon = false;
     remainingDefuses = BOMBS;
     gameStarted = undefined;
     resetCells();
@@ -161,6 +158,7 @@
     function addFlag() {
       remainingDefuses--;
       updateCell(position, { flagged: true });
+      checkGameWon();
     }
 
     function removeFlag() {
@@ -172,9 +170,37 @@
   function updateCell(position, values) {
     cells.set(position, { ...cells.get(position), ...values });
   }
+
+  function checkGameWon() {
+    let winConditions = true;
+    for (let [_position, { revealed, flagged, value }] of cells) {
+      if (flagged && value === "💣") continue; // bomb correctly guessed
+      if (revealed) continue; // normal cell
+
+      winConditions = false;
+      break;
+    }
+
+    winConditions && winGame();
+  }
+
+  function winGame() {
+    gameWon = true;
+    gameStarted = false;
+    clearInterval(timerId);
+    for (let [position] of cells) {
+      updateCell(position, { revealed: true });
+    }
+    console.log(cells);
+  }
 </script>
 
-<div>
+<div class="relative">
+  {#if gameWon}
+    <div class="absolute inset-x-0 bottom-full mx-auto mb-2 w-max text-4xl">
+      You win
+    </div>
+  {/if}
   <div
     class="flex h-20 w-full justify-between border-2 border-gray-900 bg-gray-600 p-2"
   >
@@ -200,7 +226,7 @@
         grid-template-columns: repeat(${COLS}, 1fr);        
       `}
   >
-    {#each Array.from(cells) as [position, { value, flagged, exploded, revealed, clicked, wrong }]}
+    {#each Array.from(cells) as [position, { value, flagged, exploded, revealed, clicked }]}
       <button
         class="
         stacker relative grid aspect-square w-8 cursor-default place-items-center border-2 border-t-gray-400 border-l-gray-400 border-b-gray-700 border-r-gray-700 bg-gray-600 font-bold disabled:border-none disabled:bg-gray-800
@@ -218,7 +244,7 @@
         on:click={() => revealCell(position)}
         on:contextmenu|preventDefault={() => defuseBomb(position)}
       >
-        {@html wrong
+        {@html !gameStarted && flagged && value !== "💣" // wrong bomb guess
           ? `<span class="col-start-1 row-start-1">💣</span><span class="col-start-1 row-start-1">❌</span>`
           : flagged
           ? "🚩"
