@@ -243,8 +243,7 @@
   }
 </script>
 
-<div class="relative">
-  isMobile: {IS_MOBILE}
+<div class="relative select-none">
   {#if gameWon}
     <div class="absolute inset-x-0 bottom-full mx-auto mb-2 w-max text-4xl">
       You win
