@@ -191,7 +191,6 @@
     for (let [position] of cells) {
       updateCell(position, { revealed: true });
     }
-    console.log(cells);
   }
 </script>
 
@@ -229,7 +228,7 @@
     {#each Array.from(cells) as [position, { value, flagged, exploded, revealed, clicked }]}
       <button
         class="
-        stacker relative grid aspect-square w-8 cursor-default place-items-center border-2 border-t-gray-400 border-l-gray-400 border-b-gray-700 border-r-gray-700 bg-gray-600 font-bold disabled:border-none disabled:bg-gray-800
+        relative grid aspect-square w-8 cursor-default place-items-center border-2 border-t-gray-400 border-l-gray-400 border-b-gray-700 border-r-gray-700 bg-gray-600 font-bold disabled:border-none disabled:bg-gray-800
           {value === 1 && 'text-blue-600'}
           {value === 2 && 'text-green-500'}
           {value === 3 && 'text-red-500'}
