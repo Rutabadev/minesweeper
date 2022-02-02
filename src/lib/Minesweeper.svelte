@@ -11,7 +11,6 @@
   let rightClicking;
   let rightClickStarted;
   const IS_MOBILE = isMobile();
-  console.log({ IS_MOBILE });
   resetCells();
 
   function startGame(startingPosition) {
@@ -109,16 +108,19 @@
   }
 
   function setBombs(startingPosition) {
-    for (let i = 0; i < bombs; i++) {
-      let x, y;
-      do {
-        y = Math.trunc(Math.random() * ROWS);
-        x = Math.trunc(Math.random() * COLS);
-      } while (
-        cells.get(coordsToKey(x, y))?.value === "💣" ||
-        coordsToKey(x, y) === startingPosition
-      );
-      updateCell(coordsToKey(x, y), { value: "💣" });
+    [...cells]
+      .map(([position]) => position)
+      .filter((position) => position !== startingPosition)
+      .sort(randomize)
+      .slice(0, bombs)
+      .forEach(addBomb);
+
+    function randomize() {
+      return Math.random() > 0.5 ? 1 : -1;
+    }
+
+    function addBomb(position) {
+      updateCell(position, { value: "💣" });
     }
   }
 
