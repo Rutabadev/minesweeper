@@ -47,21 +47,23 @@
       startGame(position);
     }
 
+    const { value, flagged } = cells.get(position);
+
     if (!gameStarted) {
       return;
     }
 
-    if (cells.get(position)?.flagged) {
+    if (flagged) {
       return;
     }
 
     updateCell(position, { revealed: true, clicked: true });
 
-    cells.get(position)?.value === 0 && revealNeighbours(position);
+    value === 0 && revealNeighbours(position);
 
     updateUI();
 
-    if (cells.get(position)?.value === "💣") {
+    if (value === "💣") {
       looseGame(position);
     }
 
@@ -107,7 +109,7 @@
     updateUI();
   }
 
-  function setBombs(startingPosition) {
+  function setBombs(startingPosition = "oob") {
     [...cells]
       .map(([position]) => position)
       .filter((position) => position !== startingPosition)
@@ -125,16 +127,15 @@
   }
 
   function setNumbers() {
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLS; x++) {
+    [...cells]
+      .filter(([_position, { value }]) => value !== "💣")
+      .forEach(([position]) => {
         let number = 0;
-        if (cells.get(coordsToKey(x, y))?.value === "💣") continue;
-        getNeighbours(coordsToKey(x, y)).forEach(
+        getNeighbours(position).forEach(
           (neighbour) => cells.get(neighbour)?.value === "💣" && number++
         );
-        updateCell(coordsToKey(x, y), { value: number });
-      }
-    }
+        updateCell(position, { value: number });
+      });
   }
 
   function restart() {
@@ -156,7 +157,7 @@
 
   function defuseBomb(position) {
     if (!gameStarted) {
-      return;
+      startGame();
     }
 
     if (
