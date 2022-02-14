@@ -2,7 +2,7 @@
   const COLS = 10;
   const ROWS = 5;
   let bombs = 10;
-  let startingBombs;
+  let startingBombs = bombs;
   let cells = new Map();
   let timer = 0;
   let timerId;
@@ -49,7 +49,7 @@
 
     const { value, flagged } = cells.get(position);
 
-    if (!gameStarted) {
+    if (gameStarted === false) {
       return;
     }
 
@@ -65,6 +65,7 @@
 
     if (value === "💣") {
       looseGame(position);
+      return;
     }
 
     checkGameWon();
