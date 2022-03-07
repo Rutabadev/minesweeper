@@ -284,6 +284,7 @@
       `}
     on:mousedown={handleDragOn}
     on:mouseup={handleDragOff}
+    on:contextmenu|preventDefault
   >
     {#each Array.from(cells) as [position, { value, flagged, exploded, revealed, clicked }]}
       <button
