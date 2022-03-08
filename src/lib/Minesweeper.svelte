@@ -11,6 +11,7 @@
   let rightClicking;
   let rightClickStarted;
   const IS_MOBILE = isMobile();
+
   resetCells();
 
   function startGame(startingPosition) {
@@ -135,6 +136,7 @@
         getNeighbours(position).forEach(
           (neighbour) => cells.get(neighbour)?.value === "💣" && number++
         );
+
         updateCell(position, { value: number });
       });
   }
