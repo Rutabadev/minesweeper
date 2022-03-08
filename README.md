@@ -1,5 +1,7 @@
 # MineSweeper
 
+Available at : https://neinsweeper.web.app
+
 This is a recreation of the minesweeper game using Svelte.
 
 ## How to play
