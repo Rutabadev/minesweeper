@@ -4,9 +4,13 @@ Available at : https://neinsweeper.web.app
 
 This is a recreation of the minesweeper game using Svelte.
 
-## How to play
+## Notable features
 
-Bomb number can be adjusted on the top left corner. You know how to play minesweeper for the rest.
+- Hold and drag to place flags 🚩
+- Long press for flags on mobile
+- Bombs 💣 number in the top left corner is editable before starting a game
+- The first guess will never be a bomb
+- On a lost game, the exploding bomb will be with red background, and any wrong guess will be marked with a ❌ on top of the bomb
 
 ## Deploying
 
